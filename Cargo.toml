@@ -1,0 +1,8 @@
+[package]
+name = "thread_monitor"
+version = "0.1.0"
+authors = ["Mattis Marjak <mattis.marjak@gmail.com>"]
+license = "MIT"
+
+[dependencies]
+log = "*"
