@@ -29,6 +29,12 @@ impl ThreadMonitor {
         }
     }
 
+    pub fn spawner(&self) -> MonitoredThreadSpawner {
+        MonitoredThreadSpawner {
+            sender: self.sender.clone()
+        }
+    }
+
     pub fn sender(&self) -> Sender<String> {
         self.sender.clone()
     }
@@ -37,6 +43,18 @@ impl ThreadMonitor {
         self.receiver.recv()
     }
 
+    pub fn spawn_monitored_thread<F>(&self, name: &str, f: F)
+        where F: Send + 'static + FnOnce()
+    {
+        spawn_monitored_thread(name, self.sender.clone(), f);
+    }
+}
+
+pub struct MonitoredThreadSpawner {
+    sender: Sender<String>
+}
+
+impl MonitoredThreadSpawner {
     pub fn spawn_monitored_thread<F>(&self, name: &str, f: F)
         where F: Send + 'static + FnOnce()
     {
