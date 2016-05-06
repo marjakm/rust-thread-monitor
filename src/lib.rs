@@ -1,18 +1,20 @@
 #[macro_use]
 extern crate log;
 
-use std::thread;
+use std::thread::{Builder, JoinHandle};
 use std::sync::mpsc::{channel, Sender, Receiver, RecvError};
 
 
-pub fn spawn_monitored_thread<F>(name: &str, sender: Sender<String>, f: F)
-    where F: Send + 'static + FnOnce()
+pub fn spawn_monitored_thread<F, T>(name: &str, sender: Sender<String>, f: F) -> JoinHandle<T>
+    where F: FnOnce() -> T,
+          F: Send + 'static,
+          T: Send + 'static
 {
     let nam = name.to_string();
-    thread::Builder::new().name(format!("{} thread", name)).spawn(move || {
+    Builder::new().name(format!("{} thread", name)).spawn(move || {
         let _s = Sentinel::new(nam, sender);
-        f();
-    }).expect(&format!("cannot create {} thread", name));
+        f()
+    }).expect(&format!("cannot create {} thread", name))
 }
 
 pub struct ThreadMonitor {
@@ -43,10 +45,12 @@ impl ThreadMonitor {
         self.receiver.recv()
     }
 
-    pub fn spawn_monitored_thread<F>(&self, name: &str, f: F)
-        where F: Send + 'static + FnOnce()
+    pub fn spawn_monitored_thread<F, T>(&self, name: &str, f: F) -> JoinHandle<T>
+        where F: FnOnce() -> T,
+              F: Send + 'static,
+              T: Send + 'static
     {
-        spawn_monitored_thread(name, self.sender.clone(), f);
+        spawn_monitored_thread(name, self.sender.clone(), f)
     }
 }
 
@@ -55,10 +59,12 @@ pub struct MonitoredThreadSpawner {
 }
 
 impl MonitoredThreadSpawner {
-    pub fn spawn_monitored_thread<F>(&self, name: &str, f: F)
-        where F: Send + 'static + FnOnce()
+    pub fn spawn_monitored_thread<F, T>(&self, name: &str, f: F) -> JoinHandle<T>
+        where F: FnOnce() -> T,
+              F: Send + 'static,
+              T: Send + 'static
     {
-        spawn_monitored_thread(name, self.sender.clone(), f);
+        spawn_monitored_thread(name, self.sender.clone(), f)
     }
 }
 
